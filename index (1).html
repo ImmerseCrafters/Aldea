@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ubicacion aldeas</title>
+    <style>
+        /* Diseño Guerras Tribales (Pergamino y Madera) */
+        :root {
+            --primary: #8b4513; 
+            --primary-hover: #5c3a21; 
+            --bg-color: #e3d5b8; 
+            --card-bg: #f4e4bc; 
+            --text-main: #3e2723; 
+            --text-muted: #5d4037;
+            --border-color: #c7a77b; 
+            --input-focus: rgba(139, 69, 19, 0.25);
+            --success: #27ae60;
+            --danger: #c0392b; 
+            --danger-hover: #96281b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { 
+            font-family: 'Georgia', 'Times New Roman', serif; 
+            background-color: var(--bg-color); 
+            background-image: url('https://www.transparenttextures.com/patterns/aged-paper.png'); 
+            color: var(--text-main); 
+            padding: 20px 15px; 
+            line-height: 1.5;
+        }
+        
+        .container { max-width: 850px; margin: 0 auto; }
+        
+        /* Encabezado */
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px; 
+            padding: 0 10px;
+        }
+        
+        h1 { color: #3e2723; font-size: 1.8em; font-weight: bold; text-shadow: 1px 1px 0px #fff; }
+        h2 { font-size: 1.3em; font-weight: bold; color: #5c3a21; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); padding-bottom: 5px; }
+        
+        /* Sistema de Pestañas */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn {
+            flex: 1; text-align: center; padding: 12px;
+            background-color: #e3d5b8; color: var(--primary);
+            border: 2px solid var(--primary); border-bottom: 4px solid var(--primary);
+            border-radius: 6px 6px 0 0; font-weight: bold; cursor: pointer;
+            transition: all 0.2s; text-shadow: 1px 1px 1px rgba(255,255,255,0.5);
+            opacity: 0.7;
+        }
+        .tab-btn.active {
+            background-color: var(--primary); color: #f4e4bc;
+            border-bottom: 4px solid var(--primary-hover); opacity: 1;
+            text-shadow: 1px 1px 2px #000; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Tarjetas (Pergaminos) */
+        .card { 
+            background: var(--card-bg); padding: 24px; margin-bottom: 24px; 
+            border-radius: 4px; box-shadow: inset 0 0 10px rgba(139, 69, 19, 0.1), 0 4px 6px -1px rgba(0, 0, 0, 0.2); 
+            border: 2px solid var(--border-color);
+        }
+        
+        form { display: flex; flex-direction: column; gap: 16px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        label { font-size: 0.95em; font-weight: bold; color: var(--text-main); }
+        .coord-inputs { display: flex; align-items: center; gap: 12px; }
+        .coord-inputs input { flex: 1; text-align: center; }
+        .coord-separator { color: var(--primary); font-weight: bold; }
+        
+        input { 
+            padding: 12px 16px; border: 2px solid var(--border-color); border-radius: 4px; 
+            font-size: 1rem; width: 100%; background-color: #fff9e6; color: var(--text-main);
+            font-family: inherit; transition: all 0.2s ease; outline: none;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--input-focus); }
+
+        /* Desplegables y Botones */
+        .custom-select-wrapper { position: relative; width: 100%; }
+        .custom-select-trigger {
+            padding: 12px 16px; border: 2px solid var(--border-color); border-radius: 4px; 
+            background-color: #fff9e6; color: var(--text-main); font-size: 1rem; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .custom-select-trigger::after { content: "▼"; font-size: 0.8em; color: var(--primary); }
+        .custom-select-options {
+            position: absolute; top: 100%; left: 0; right: 0; background-color: #fff9e6;
+            border: 2px solid var(--primary); border-top: none; border-radius: 0 0 4px 4px; z-index: 100;
+            max-height: 250px; overflow-y: auto; display: none; list-style: none; box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        }
+        .custom-select-options.open { display: block; }
+        .custom-select-options li { padding: 12px 16px; cursor: pointer; border-bottom: 1px solid rgba(199, 167, 123, 0.4); font-weight: bold; }
+        .custom-select-options li:hover { background-color: #e3d5b8; color: var(--primary-hover); }
+        .custom-select-options li:last-child { border-bottom: none; }
+        
+        button { 
+            padding: 12px 20px; background-color: var(--primary); color: #f4e4bc; cursor: pointer; 
+            border: 2px solid #3e2723; border-radius: 4px; font-weight: bold; font-size: 1rem;
+            text-shadow: 1px 1px 2px #000; box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 2px rgba(0,0,0,0.3); transition: all 0.1s; 
+        }
+        button:hover { background-color: var(--primary-hover); }
+        button:active { transform: translateY(2px); box-shadow: none; }
+        
+        .login-btn { background-color: transparent; color: var(--primary); border: 2px solid var(--primary); padding: 8px 16px; font-size: 0.9em; text-shadow: none; box-shadow: none; }
+        .login-btn:hover { background-color: var(--primary); color: #fff; }
+        .btn-delete-row { background-color: #fff9e6; color: var(--danger); border: 2px solid var(--danger); padding: 6px 12px; font-size: 0.85em; text-shadow: none; box-shadow: none; }
+        .btn-delete-row:hover { background-color: var(--danger); color: #fff; }
+        .btn-cancel { background-color: transparent; color: var(--danger); border: 2px solid var(--danger); box-shadow: none; text-shadow: none; }
+        .btn-cancel:hover { background-color: var(--danger); color: white; }
+        
+        /* Tabla */
+        .table-responsive { overflow-x: auto; width: 100%; border: 2px solid var(--border-color); border-radius: 4px; background-color: #fff9e6; }
+        table { width: 100%; min-width: 550px; border-collapse: collapse; }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 0.95em; }
+        th { background-color: #e3d5b8; color: var(--text-main); font-weight: bold; text-transform: uppercase; font-size: 0.85em; }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) { background-color: rgba(227, 213, 184, 0.3); } 
+        
+        /* Etiquetas */
+        .badge { padding: 4px 10px; border-radius: 3px; font-size: 0.85em; font-weight: bold; display: inline-block; text-shadow: 1px 1px 1px rgba(0,0,0,0.2); color: white; }
+        .type-off { background-color: var(--danger); border: 1px solid #96281b; }
+        .type-def { background-color: var(--success); border: 1px solid #1e8449; }
+
+        /* Notificación Toast */
+        #toast { visibility: hidden; min-width: 250px; background-color: var(--primary); color: #f4e4bc; text-align: center; border: 2px solid #3e2723; border-radius: 4px; padding: 16px; position: fixed; z-index: 1000; bottom: 30px; right: 30px; font-weight: bold; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); opacity: 0; transform: translateY(20px); transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s; }
+        #toast.show { visibility: visible; opacity: 1; transform: translateY(0); }
+
+        .admin-only { display: none; }
+
+        /* --- MODALES RÚSTICOS (Reemplazan los avisos blancos feos) --- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.6); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
+        .modal-card { background: var(--card-bg); padding: 24px; border-radius: 4px; border: 2px solid var(--border-color); box-shadow: inset 0 0 10px rgba(139, 69, 19, 0.1), 0 10px 25px rgba(0,0,0,0.5); width: 90%; max-width: 350px; }
+        .modal-card h3 { color: #3e2723; margin-bottom: 20px; text-align: center; font-size: 1.4em; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
+        .modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        
+        .time-col { font-family: monospace; font-size: 1.05em; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Ubicacion aldeas</h1>
+            <button id="login-btn" class="login-btn">Acceso Admin</button>
+        </div>
+
+        <div class="tabs">
+            <div class="tab-btn active" data-tab="tab-directorio">⛺ Directorio de Tribu</div>
+            <div class="tab-btn" data-tab="tab-simulador">⚔️ Identificar Ataques y Apoyos</div>
+        </div>
+
+        <div id="tab-directorio" class="tab-content active">
+            <div class="card admin-only" id="admin-panel">
+                <h2>Añadir Nuevo Pueblo</h2>
+                <form id="add-village-form">
+                    <div class="form-group">
+                        <label>Coordenadas del Pueblo</label>
+                        <div class="coord-inputs">
+                            <input type="number" id="coord-x" placeholder="X" required min="0" max="999">
+                            <span class="coord-separator">|</span>
+                            <input type="number" id="coord-y" placeholder="Y" required min="0" max="999">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="player">Nombre del Jugador</label>
+                        <input type="text" id="player" placeholder="Introduce el apodo del jugador" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Estrategia / Tipo</label>
+                        <div class="custom-select-wrapper" id="type-wrapper">
+                            <div class="custom-select-trigger" id="type-trigger"><span id="type-trigger-text">Fuerza Ofensiva (OFF)</span></div>
+                            <ul class="custom-select-options" id="type-options">
+                                <li data-value="OFF">Fuerza Ofensiva (OFF)</li>
+                                <li data-value="DEF">Fuerza Defensiva (DEF)</li>
+                            </ul>
+                        </div>
+                        <input type="hidden" id="type" value="OFF">
+                    </div>
+                    <button type="submit" style="margin-top: 8px;">Guardar Pueblo en la Base de Datos</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>Calculadora de Distancias</h2>
+                <div class="form-group">
+                    <label>Pueblo de Origen</label>
+                    <div class="custom-select-wrapper" id="origin-wrapper">
+                        <div class="custom-select-trigger" id="origin-trigger"><span id="origin-trigger-text">-- Cargando base de datos... --</span></div>
+                        <ul class="custom-select-options" id="origin-options"></ul>
+                    </div>
+                    <input type="hidden" id="origin-village" value="">
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Directorio de la Tribu</h2>
+                <div class="table-responsive">
+                    <table id="results-table">
+                        <thead>
+                            <tr>
+                                <th>Distancia</th>
+                                <th>Coords</th>
+                                <th>Jugador</th>
+                                <th>Tipo</th>
+                                <th class="admin-only admin-col">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="results-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-simulador" class="tab-content">
+            <div class="card">
+                <h2>Identificador y Coordinador Defensivo</h2>
+                
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>Velocidad del Mundo</label>
+                    <div class="custom-select-wrapper">
+                        <div class="custom-select-trigger" id="speed-trigger"><span id="speed-trigger-text">Mundo Normal (Velocidad x1)</span></div>
+                        <ul class="custom-select-options" id="speed-options">
+                            <li data-value="1">Mundo Normal (Velocidad x1)</li>
+                            <li data-value="1.5">Mundo Rápido (Velocidad x1.5)</li>
+                            <li data-value="2">Mundo Muy Rápido (Velocidad x2)</li>
+                        </ul>
+                    </div>
+                    <input type="hidden" id="world-speed" value="1">
+                </div>
+
+                <div class="form-group">
+                    <label>Coordenadas Origen (Atacante)</label>
+                    <div class="coord-inputs">
+                        <input type="number" id="sim-orig-x" placeholder="X" min="0" max="999">
+                        <span class="coord-separator">|</span>
+                        <input type="number" id="sim-orig-y" placeholder="Y" min="0" max="999">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 10px;">
+                    <label>Coordenadas Destino (Pueblo que recibe ataque)</label>
+                    <div class="coord-inputs">
+                        <input type="number" id="sim-dest-x" placeholder="X" min="0" max="999">
+                        <span class="coord-separator">|</span>
+                        <input type="number" id="sim-dest-y" placeholder="Y" min="0" max="999">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 10px;">
+                    <label>Hora de Salida del Ataque</label>
+                    <input type="datetime-local" id="sim-launch" step="1"> 
+                </div>
+
+                <div class="form-group" style="margin-top: 10px;">
+                    <label>Hora de Llegada (Impacto)</label>
+                    <input type="datetime-local" id="sim-impact" step="1">
+                </div>
+
+                <button id="btn-calc-sim" style="margin-top: 20px;">🕵️ Analizar Ataque y Buscar Apoyos</button>
+
+                <div id="sim-result" style="margin-top: 25px; text-align: center; display: none; padding: 15px; border: 2px dashed var(--border-color); border-radius: 8px; background: #fff9e6;">
+                    </div>
+
+                <div id="defensive-support" style="display: none; margin-top: 30px;">
+                    <h3 style="margin-bottom: 15px; color: var(--text-main); border-bottom: 2px solid var(--border-color); padding-bottom: 5px;">🛡️ Apoyos de la Tribu (Tiempos de Viaje)</h3>
+                    <div class="table-responsive">
+                        <table id="support-table">
+                            <thead>
+                                <tr>
+                                    <th>Pueblo</th>
+                                    <th>Dist.</th>
+                                    <th title="Con Paladín (10m)">🐎 Paladín</th>
+                                    <th title="Caballería Pesada (11m)">🛡️ Pesada</th>
+                                    <th title="Lanzas (18m)">🔱 Lanza</th>
+                                    <th title="Espadas (22m)">🗡️ Espada</th>
+                                </tr>
+                            </thead>
+                            <tbody id="support-body">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast">✅ Acción realizada</div>
+
+    <div id="login-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h3>Acceso Administrador</h3>
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label>Correo electrónico</label>
+                <input type="email" id="login-email" placeholder="tribu@admin.com">
+            </div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" id="login-pass" placeholder="••••••••">
+            </div>
+            <div class="modal-buttons">
+                <button id="modal-cancel-btn" class="btn-cancel" style="flex: 1;">Cancelar</button>
+                <button id="modal-login-btn" style="flex: 1;">Entrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="alert-modal" class="modal-overlay">
+        <div class="modal-card" style="text-align: center;">
+            <h3 style="color: var(--danger);">⚠️ Mensaje</h3>
+            <p id="alert-message" style="margin-bottom: 20px; font-size: 1.1em; font-weight: bold;"></p>
+            <button id="alert-ok-btn" style="width: 100%;">Entendido</button>
+        </div>
+    </div>
+
+    <div id="confirm-modal" class="modal-overlay">
+        <div class="modal-card" style="text-align: center;">
+            <h3 style="color: var(--danger);">❓ Confirmar Acción</h3>
+            <p id="confirm-message" style="margin-bottom: 20px; font-size: 1.1em; font-weight: bold;"></p>
+            <div class="modal-buttons">
+                <button id="confirm-cancel-btn" class="btn-cancel" style="flex: 1;">Cancelar</button>
+                <button id="confirm-ok-btn" style="flex: 1; background-color: var(--danger); border-color: #5c1811;">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, addDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+        // =========================================================
+        // ⚠️ PEGA AQUÍ TU FIREBASE CONFIG (BORRA ESTO Y PEGA EL TUYO) ⚠️
+        // =========================================================
+        const firebaseConfig = {
+  
+  apiKey: "AIzaSyAVa6CvofgbJVmKvBNN0foNKhBmemQ7FFM",
+  
+  authDomain: "tribe-location.firebaseapp.com",
+  
+  projectId: "tribe-location",
+  
+  storageBucket: "tribe-location.firebasestorage.app",
+  
+  messagingSenderId: "109260184651",
+  
+  appId: "1:109260184651:web:24f5f8ee7325e65a3d41ce"
+  
+};
+        // =========================================================
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let villages = [];
+        let isAdmin = false;
+
+        // --- SISTEMA DE MODALES PERSONALIZADOS ---
+        function customAlert(msg) {
+            document.getElementById('alert-message').textContent = msg;
+            document.getElementById('alert-modal').style.display = 'flex';
+        }
+        document.getElementById('alert-ok-btn').addEventListener('click', () => {
+            document.getElementById('alert-modal').style.display = 'none';
+        });
+
+        let confirmCallback = null;
+        function customConfirm(msg, callback) {
+            document.getElementById('confirm-message').textContent = msg;
+            document.getElementById('confirm-modal').style.display = 'flex';
+            confirmCallback = callback;
+        }
+        document.getElementById('confirm-cancel-btn').addEventListener('click', () => {
+            document.getElementById('confirm-modal').style.display = 'none';
+            confirmCallback = null;
+        });
+        document.getElementById('confirm-ok-btn').addEventListener('click', () => {
+            document.getElementById('confirm-modal').style.display = 'none';
+            if (confirmCallback) confirmCallback();
+        });
+
+
+        // --- SISTEMA DE PESTAÑAS (TABS) ---
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                tabBtns.forEach(b => b.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        // --- LOGICA DE DESPLEGABLES ---
+        function setupCustomSelect(triggerId, optionsId, inputId, textId) {
+            document.getElementById(triggerId).addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.querySelectorAll('.custom-select-options').forEach(opt => {
+                    if(opt.id !== optionsId) opt.classList.remove('open');
+                });
+                document.getElementById(optionsId).classList.toggle('open');
+            });
+
+            document.querySelectorAll(`#${optionsId} li`).forEach(li => {
+                li.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    document.getElementById(inputId).value = this.dataset.value;
+                    document.getElementById(textId).textContent = this.textContent;
+                    document.getElementById(optionsId).classList.remove('open');
+                });
+            });
+        }
+        setupCustomSelect('type-trigger', 'type-options', 'type', 'type-trigger-text');
+        setupCustomSelect('speed-trigger', 'speed-options', 'world-speed', 'speed-trigger-text');
+        
+        const optionsOrigin = document.getElementById('origin-options');
+        document.getElementById('origin-trigger').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.querySelectorAll('.custom-select-options').forEach(opt => {
+                if(opt.id !== 'origin-options') opt.classList.remove('open');
+            });
+            optionsOrigin.classList.toggle('open');
+        });
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.custom-select-options').forEach(opt => opt.classList.remove('open'));
+        });
+
+        const toast = document.getElementById('toast');
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.className = "show";
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+
+        // --- SISTEMA DE LOGIN Y MODAL ---
+        const loginBtn = document.getElementById('login-btn');
+        const adminPanel = document.getElementById('admin-panel');
+        const adminCols = document.querySelectorAll('.admin-col');
+        const loginModal = document.getElementById('login-modal');
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                isAdmin = true;
+                loginBtn.textContent = "Cerrar Sesión";
+                adminPanel.style.display = 'block';
+                adminCols.forEach(col => col.style.display = 'table-cell');
+            } else {
+                isAdmin = false;
+                loginBtn.textContent = "Acceso Admin";
+                adminPanel.style.display = 'none';
+                adminCols.forEach(col => col.style.display = 'none');
+            }
+            calculateAndRender();
+        });
+
+        loginBtn.addEventListener('click', () => {
+            if (isAdmin) signOut(auth);
+            else {
+                loginModal.style.display = 'flex';
+                document.getElementById('login-email').value = '';
+                document.getElementById('login-pass').value = '';
+            }
+        });
+
+        document.getElementById('modal-cancel-btn').addEventListener('click', () => loginModal.style.display = 'none');
+        
+        document.getElementById('modal-login-btn').addEventListener('click', () => {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
+            
+            if(!email || !pass) {
+                customAlert("Por favor, introduce tu correo y contraseña.");
+                return;
+            }
+
+            signInWithEmailAndPassword(auth, email, pass).then(() => loginModal.style.display = 'none')
+            .catch(err => customAlert("Credenciales incorrectas."));
+        });
+
+        // --- FIREBASE DIRECTORIO ---
+        onSnapshot(collection(db, "villages"), (snapshot) => {
+            villages = [];
+            snapshot.forEach((doc) => { villages.push({ id: doc.id, ...doc.data() }); });
+            updateSelect(); calculateAndRender();
+        });
+
+        document.getElementById('add-village-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if(!isAdmin) {
+                customAlert("Solo los administradores pueden hacer esto.");
+                return;
+            }
+            const x = parseInt(document.getElementById('coord-x').value);
+            const y = parseInt(document.getElementById('coord-y').value);
+            const player = document.getElementById('player').value;
+            const type = document.getElementById('type').value;
+
+            try {
+                await addDoc(collection(db, "villages"), { x, y, player, type, coordStr: `${x}|${y}` });
+                document.getElementById('coord-x').value = ''; document.getElementById('coord-y').value = '';
+                document.getElementById('player').value = ''; document.getElementById('coord-x').focus();
+                showToast("⚔️ ¡Pueblo añadido correctamente!");
+            } catch (err) {
+                customAlert("Error al guardar: " + err.message);
+            }
+        });
+
+        window.deleteVillage = function(id) {
+            if(!isAdmin) return;
+            customConfirm("¿Estás seguro de que deseas eliminar este pueblo de la lista?", async () => {
+                await deleteDoc(doc(db, "villages", id));
+                showToast("🗑️ Pueblo eliminado.");
+            });
+        };
+
+        const hiddenOrigin = document.getElementById('origin-village');
+        const triggerOriginText = document.getElementById('origin-trigger-text');
+        
+        function updateSelect() {
+            const currentValue = hiddenOrigin.value;
+            optionsOrigin.innerHTML = '';
+            if(villages.length === 0) { triggerOriginText.textContent = "No hay pueblos"; hiddenOrigin.value = ""; return; }
+
+            let defaultLi = document.createElement('li');
+            defaultLi.textContent = '-- Selecciona un pueblo para calcular --';
+            defaultLi.addEventListener('click', (e) => {
+                e.stopPropagation(); hiddenOrigin.value = ""; triggerOriginText.textContent = defaultLi.textContent;
+                optionsOrigin.classList.remove('open'); calculateAndRender();
+            });
+            optionsOrigin.appendChild(defaultLi);
+
+            let valueExists = false;
+            villages.forEach(v => {
+                let li = document.createElement('li');
+                li.textContent = `${v.coordStr} - ${v.player} (${v.type})`;
+                li.addEventListener('click', (e) => {
+                    e.stopPropagation(); hiddenOrigin.value = v.id; triggerOriginText.textContent = li.textContent;
+                    optionsOrigin.classList.remove('open'); calculateAndRender();
+                });
+                optionsOrigin.appendChild(li);
+                if (v.id === currentValue) { valueExists = true; triggerOriginText.textContent = li.textContent; }
+            });
+            if (!valueExists) { hiddenOrigin.value = ""; triggerOriginText.textContent = '-- Selecciona un pueblo --'; }
+        }
+
+        const resultsBody = document.getElementById('results-body');
+        function calculateAndRender() {
+            resultsBody.innerHTML = '';
+            const selectedId = hiddenOrigin.value;
+            let displayList = [...villages];
+
+            if (selectedId) {
+                const origin = villages.find(v => v.id === selectedId);
+                displayList.forEach(v => {
+                    const dx = v.x - origin.x; const dy = v.y - origin.y;
+                    v.distance = Math.sqrt((dx * dx) + (dy * dy));
+                });
+                displayList.sort((a, b) => a.distance - b.distance);
+            } else displayList.forEach(v => v.distance = 0);
+
+            displayList.forEach(v => {
+                const tr = document.createElement('tr');
+                const distText = v.distance === 0 && !selectedId ? '-' : v.distance.toFixed(2);
+                const typeClass = v.type === 'OFF' ? 'type-off' : 'type-def';
+                let html = `
+                    <td style="font-weight: bold; color: var(--primary);">${distText}</td>
+                    <td style="font-family: monospace; font-size: 1.1em; font-weight: bold;">${v.coordStr}</td>
+                    <td style="font-weight: bold;">${v.player}</td>
+                    <td><span class="badge ${typeClass}">${v.type}</span></td>
+                `;
+                if(isAdmin) html += `<td><button class="btn-delete-row" onclick="deleteVillage('${v.id}')">Eliminar</button></td>`;
+                tr.innerHTML = html; resultsBody.appendChild(tr);
+            });
+        }
+
+        function formatTravelTime(minutes) {
+            const totalSeconds = Math.round(minutes * 60);
+            const h = Math.floor(totalSeconds / 3600);
+            const m = Math.floor((totalSeconds % 3600) / 60);
+            const s = totalSeconds % 60;
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // --- SIMULADOR DE ATAQUES LÓGICA Y APOYOS ---
+        document.getElementById('btn-calc-sim').addEventListener('click', () => {
+            const ox = parseInt(document.getElementById('sim-orig-x').value);
+            const oy = parseInt(document.getElementById('sim-orig-y').value);
+            const dx = parseInt(document.getElementById('sim-dest-x').value);
+            const dy = parseInt(document.getElementById('sim-dest-y').value);
+            const tLaunchStr = document.getElementById('sim-launch').value;
+            const tImpactStr = document.getElementById('sim-impact').value;
+            const worldSpeed = parseFloat(document.getElementById('world-speed').value);
+
+            if(isNaN(ox) || isNaN(oy) || isNaN(dx) || isNaN(dy)) {
+                customAlert("Por favor, rellena todas las coordenadas."); return;
+            }
+
+            const dist = Math.sqrt(Math.pow(dx - ox, 2) + Math.pow(dy - oy, 2));
+
+            // Si hay horas, identificamos tropa.
+            if(tLaunchStr && tImpactStr) {
+                const tLaunch = new Date(tLaunchStr);
+                const tImpact = new Date(tImpactStr);
+                
+                if (dist === 0) { customAlert("El origen y destino no pueden ser el mismo pueblo."); return; }
+                const diffMs = tImpact - tLaunch;
+                if (diffMs <= 0) { customAlert("La hora de llegada debe ser posterior a la de salida."); return; }
+                
+                const diffMin = diffMs / 1000 / 60;
+                const calcBaseSpeed = (diffMin / dist) * worldSpeed;
+
+                const units = [
+                    { name: 'Espía', speed: 9, icon: '👁️', color: '#3498db' },
+                    { name: 'Cab. Ligera / Paladín', speed: 10, icon: '🐎', color: '#e67e22' },
+                    { name: 'Caballería Pesada', speed: 11, icon: '🛡️', color: '#2c3e50' },
+                    { name: 'Hacha / Lanza / Arquero', speed: 18, icon: '🪓 / 🔱 / 🏹', color: '#8b4513' }, // Aquí he cambiado el icono múltiple
+                    { name: 'Espada', speed: 22, icon: '🗡️', color: '#7f8c8d' },
+                    { name: 'Ariete / Catapulta', speed: 30, icon: '🪵', color: '#c0392b' },
+                    { name: 'Noble', speed: 35, icon: '👑', color: '#9b59b6' }
+                ];
+
+                let closest = units[0];
+                let minDiff = Math.abs(calcBaseSpeed - units[0].speed);
+                for(let i=1; i<units.length; i++) {
+                    let currentDiff = Math.abs(calcBaseSpeed - units[i].speed);
+                    if(currentDiff < minDiff) { closest = units[i]; minDiff = currentDiff; }
+                }
+
+                const resDiv = document.getElementById('sim-result');
+                resDiv.style.display = 'block';
+                resDiv.innerHTML = `
+                    <div style="font-size: 1.1em; color: var(--text-main); margin-bottom: 10px;">La tropa atacante más lenta es:</div>
+                    <div style="font-size: 2.5em; margin-bottom: 5px;">${closest.icon}</div>
+                    <div style="font-size: 1.6em; font-weight: bold; color: ${closest.color}; text-transform: uppercase;">${closest.name}</div>
+                    <div style="font-size: 0.8em; color: var(--text-muted); margin-top: 10px;">(Distancia entre atacante y objetivo: ${dist.toFixed(2)} casillas)</div>
+                `;
+            }
+
+            // --- Lógica de Apoyos (Se activa siempre) ---
+            const supportDiv = document.getElementById('defensive-support');
+            const supportBody = document.getElementById('support-body');
+            supportBody.innerHTML = '';
+
+            if (villages.length === 0) {
+                supportDiv.style.display = 'none';
+                return;
+            }
+
+            let supportList = villages.map(v => {
+                const distanceToTarget = Math.sqrt(Math.pow(dx - v.x, 2) + Math.pow(dy - v.y, 2));
+                return { ...v, distanceToTarget };
+            });
+
+            supportList.sort((a, b) => a.distanceToTarget - b.distanceToTarget);
+
+            supportList.forEach(v => {
+                if(v.distanceToTarget === 0) return;
+                
+                const tr = document.createElement('tr');
+                
+                const timePaladin = formatTravelTime((v.distanceToTarget * 10) / worldSpeed);
+                const timePesada = formatTravelTime((v.distanceToTarget * 11) / worldSpeed);
+                const timeLanza = formatTravelTime((v.distanceToTarget * 18) / worldSpeed);
+                const timeEspada = formatTravelTime((v.distanceToTarget * 22) / worldSpeed);
+
+                const typeClass = v.type === 'DEF' ? 'color: var(--success); font-weight:bold;' : 'color: var(--text-muted);';
+
+                tr.innerHTML = `
+                    <td>
+                        <span style="font-weight:bold; font-family:monospace; font-size:1.1em; color:var(--primary);">${v.coordStr}</span><br>
+                        <span style="font-size:0.85em; ${typeClass}">${v.player} (${v.type})</span>
+                    </td>
+                    <td style="font-weight:bold;">${v.distanceToTarget.toFixed(1)}</td>
+                    <td class="time-col" style="color:#e67e22;">${timePaladin}</td>
+                    <td class="time-col" style="color:#2c3e50;">${timePesada}</td>
+                    <td class="time-col" style="color:#8b4513;">${timeLanza}</td>
+                    <td class="time-col" style="color:#7f8c8d;">${timeEspada}</td>
+                `;
+                supportBody.appendChild(tr);
+            });
+
+            supportDiv.style.display = 'block';
+        });
+    </script>
+</body>
+</html>
